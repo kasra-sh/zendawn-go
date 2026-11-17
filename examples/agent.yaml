@@ -1,0 +1,78 @@
+# Example OpenRouter coding agent for the zendawn-go CLI.
+# MCP tools (tavily__*) are auto-injected when connected; permissions still ask.
+# On TUI start, free ZDR chat models (coding sort) are fetched and become the catalog;
+# the session switches to the first fetched model. YAML models below are the offline
+# fallback and merge base until that refresh succeeds.
+id: openrouter-coding
+name: OpenRouter Coding
+instructions: |
+  You are a software engineering agent with tools for the local working directory.
+  Prefer answering in chat when tools are unnecessary. If the prompt is ambiguous, ask a short clarifying question instead of guessing via tools or shell.
+  Do not run shell just to discover cwd; the host provides the working directory.
+  For listing files, prefer glob or shell ls after approval when the task needs it.
+  Use read/grep before editing. Use write only when asked to change files.
+  Never exfiltrate secrets.
+  For live web search or extraction, call the tavily__* tools listed under [MCP tools] directly.
+  Do not use the skill tool or shell/CLI for Tavily. Never ask the user to paste API keys into chat.
+providers:
+  openai:
+    baseUrl: https://openrouter.ai/api/v1
+    apiKeyEnv: OPENROUTER_API_KEY
+models:
+  - provider: openai
+    id: google/gemma-4-31b-it:free
+  - provider: openai
+    id: google/gemma-4-26b-a4b-it:free
+  - provider: openai
+    id: particle-ai/particle-1:free
+model:
+  provider: openai
+  id: google/gemma-4-31b-it:free
+  params:
+    temperature: 0.1
+tools:
+  - read
+  - write
+  - glob
+  - grep
+  - shell
+permissions:
+  - action: "*"
+    resource: "*"
+    effect: deny
+  - action: read
+    resource: "*"
+    effect: allow
+  - action: glob
+    resource: "*"
+    effect: allow
+  - action: grep
+    resource: "*"
+    effect: allow
+  - action: edit
+    resource: "*"
+    effect: ask
+  - action: shell
+    resource: "*"
+    effect: ask
+  - action: "tavily__*"
+    resource: "*"
+    effect: ask
+maxSteps: 25
+toolParallelism: sequential
+stream: true
+
+secrets:
+  - name: TAVILY_API_KEY
+    description: Tavily API key
+    source: env_or_ask
+    persist: session
+
+mcp:
+  servers:
+    tavily:
+      transport: http
+      url: https://mcp.tavily.com/mcp/
+      headers:
+        Authorization: "Bearer ${TAVILY_API_KEY}"
+      optional: false

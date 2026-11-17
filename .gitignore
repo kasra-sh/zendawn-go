@@ -1,0 +1,10 @@
+/dist/
+/zendawn
+/zendawn.exe
+cmd/zendawn/zendawn
+cmd/zendawn/zendan
+cmd/zendawn/zendawn.exe
+.zendawn/**
+*.test
+*.out
+coverage.out
